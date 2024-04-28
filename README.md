@@ -1,1 +1,1 @@
-# Type-safe schema-validated API Client
+# Type-safe schema-based API Client
