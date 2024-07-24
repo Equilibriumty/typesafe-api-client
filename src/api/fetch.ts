@@ -9,6 +9,10 @@ import {
 } from "./api.ts";
 import { z } from "zod";
 
+interface TypedResponse<T> extends Response {
+  json(): Promise<T>;
+}
+
 type DefaultHeaders = Partial<{
   "Content-Type": string;
   Accept: string;
@@ -17,7 +21,15 @@ type DefaultHeaders = Partial<{
 
 type TypedHeaders = RequestInit["headers"] & DefaultHeaders;
 
-const BASE_API_URL = `https://jsonplaceholder.typicode.com`;
+type TypedRequestInit = RequestInit & {
+  headers?: TypedHeaders;
+};
+
+declare function fetch<T extends Endpoints>(
+  url: RequestInfo | URL,
+  init?: TypedRequestInit
+  // NEED To THINK ABOut THE SUITABLE RETURN TYPE HERE
+): Promise<TypedResponse<unknown>>;
 
 function replacePlaceholders(
   text: string,
@@ -28,8 +40,12 @@ function replacePlaceholders(
   });
 }
 
-function resolveUrl(path: string, params: EndpointParameters | undefined) {
-  const url = `${BASE_API_URL}${path}`;
+function resolveUrl(
+  baseUrl: string,
+  path: string,
+  params: EndpointParameters | undefined
+) {
+  const url = `${baseUrl}${path}`;
 
   if (!params) {
     return url;
@@ -60,13 +76,13 @@ type Endpoints = ValuesOfType<ValuesOfType<EndpointByMethod>>;
 export async function fetchFromApi<EP extends Endpoints>(
   endpoint: EP,
   parameters: z.infer<EP["parameters"]>,
-  options?: { headers?: TypedHeaders }
+  options: { baseUrl: string; headers?: TypedHeaders }
 ): Promise<z.infer<EP["response"]>> {
   const validatedParams = parameters
     ? endpoint.parameters.parse(parameters)
     : parameters;
 
-  const url = resolveUrl(endpoint.path.value, validatedParams);
+  const url = resolveUrl(options.baseUrl, endpoint.path.value, validatedParams);
 
   const payload = validatedParams
     ? "body" in validatedParams
@@ -87,15 +103,8 @@ export async function fetchFromApi<EP extends Endpoints>(
 }
 
 class ApiClient {
-  baseUrl: string = "";
-
-  constructor(public options: { headers?: TypedHeaders }) {
+  constructor(public options: { baseUrl: string; headers?: TypedHeaders }) {
     this.options = options;
-  }
-
-  public setBaseUrl(newBaseUrl: string) {
-    this.baseUrl = newBaseUrl;
-    return this;
   }
 
   public get<
@@ -105,7 +114,7 @@ class ApiClient {
     path: TPath,
     params: z.infer<TEndpoint["parameters"]>
   ): Promise<z.infer<EndpointByMethod["get"][TPath]["response"]>> {
-    return fetchFromApi(getEndpointConfig("get", path), params);
+    return fetchFromApi(getEndpointConfig("get", path), params, this.options);
   }
 
   public post<
@@ -115,7 +124,7 @@ class ApiClient {
     path: TPath,
     params: z.infer<TEndpoint["parameters"]>
   ): Promise<z.infer<EndpointByMethod["post"][TPath]["response"]>> {
-    return fetchFromApi(getEndpointConfig("post", path), params);
+    return fetchFromApi(getEndpointConfig("post", path), params, this.options);
   }
 
   public patch<
@@ -125,7 +134,7 @@ class ApiClient {
     path: TPath,
     params: z.infer<TEndpoint["parameters"]>
   ): Promise<z.infer<EndpointByMethod["patch"][TPath]["response"]>> {
-    return fetchFromApi(getEndpointConfig("patch", path), params);
+    return fetchFromApi(getEndpointConfig("patch", path), params, this.options);
   }
 
   public put<
@@ -135,7 +144,7 @@ class ApiClient {
     path: TPath,
     params: z.infer<TEndpoint["parameters"]>
   ): Promise<z.infer<EndpointByMethod["put"][TPath]["response"]>> {
-    return fetchFromApi(getEndpointConfig("put", path), params);
+    return fetchFromApi(getEndpointConfig("put", path), params, this.options);
   }
 
   public delete<
@@ -145,11 +154,16 @@ class ApiClient {
     path: TPath,
     params: z.infer<TEndpoint["parameters"]>
   ): Promise<z.infer<EndpointByMethod["delete"][TPath]["response"]>> {
-    return fetchFromApi(getEndpointConfig("delete", path), params);
+    return fetchFromApi(
+      getEndpointConfig("delete", path),
+      params,
+      this.options
+    );
   }
 }
 
 export const apiClient = new ApiClient({
+  baseUrl: `https://jsonplaceholder.typicode.com`,
   headers: {
     Accept: "asd",
     Authorization: "Bearer bla",
