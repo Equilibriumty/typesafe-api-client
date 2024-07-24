@@ -6,8 +6,16 @@ import {
   PatchEndpoints,
   PostEndpoints,
   PutEndpoints,
-} from './api.ts';
-import { z } from 'zod';
+} from "./api.ts";
+import { z } from "zod";
+
+type DefaultHeaders = Partial<{
+  "Content-Type": string;
+  Accept: string;
+  Authorization: string;
+}>;
+
+type TypedHeaders = RequestInit["headers"] & DefaultHeaders;
 
 const BASE_API_URL = `https://jsonplaceholder.typicode.com`;
 
@@ -16,7 +24,7 @@ function replacePlaceholders(
   values: { [key: string]: unknown }
 ): string {
   return text.replace(/{(\w+)}/g, (_, key) => {
-    return String(values[key]) || '';
+    return String(values[key]) || "";
   });
 }
 
@@ -30,7 +38,7 @@ function resolveUrl(path: string, params: EndpointParameters | undefined) {
   const resolvedUrl =
     params.path !== undefined ? replacePlaceholders(url, params.path) : url;
 
-  const query = 'query' in params ? params.query : undefined;
+  const query = "query" in params ? params.query : undefined;
 
   if (!query) {
     return resolvedUrl;
@@ -51,8 +59,9 @@ type Endpoints = ValuesOfType<ValuesOfType<EndpointByMethod>>;
 
 export async function fetchFromApi<EP extends Endpoints>(
   endpoint: EP,
-  parameters: z.infer<EP['parameters']>
-): Promise<z.infer<EP['response']>> {
+  parameters: z.infer<EP["parameters"]>,
+  options?: { headers?: TypedHeaders }
+): Promise<z.infer<EP["response"]>> {
   const validatedParams = parameters
     ? endpoint.parameters.parse(parameters)
     : parameters;
@@ -60,16 +69,14 @@ export async function fetchFromApi<EP extends Endpoints>(
   const url = resolveUrl(endpoint.path.value, validatedParams);
 
   const payload = validatedParams
-    ? 'body' in validatedParams
+    ? "body" in validatedParams
       ? JSON.stringify(validatedParams.body)
       : undefined
     : undefined;
 
   return fetch(url, {
     method: endpoint.method.value,
-    headers: {
-      'content-type': 'application/json',
-    },
+    headers: options?.headers,
     body: payload,
   })
     .then((response) => response.json())
@@ -80,7 +87,11 @@ export async function fetchFromApi<EP extends Endpoints>(
 }
 
 class ApiClient {
-  baseUrl: string = '';
+  baseUrl: string = "";
+
+  constructor(public options: { headers?: TypedHeaders }) {
+    this.options = options;
+  }
 
   public setBaseUrl(newBaseUrl: string) {
     this.baseUrl = newBaseUrl;
@@ -92,9 +103,9 @@ class ApiClient {
     TEndpoint extends GetEndpoints[TPath]
   >(
     path: TPath,
-    params: z.infer<TEndpoint['parameters']>
-  ): Promise<z.infer<EndpointByMethod['get'][TPath]['response']>> {
-    return fetchFromApi(getEndpointConfig('get', path), params);
+    params: z.infer<TEndpoint["parameters"]>
+  ): Promise<z.infer<EndpointByMethod["get"][TPath]["response"]>> {
+    return fetchFromApi(getEndpointConfig("get", path), params);
   }
 
   public post<
@@ -102,9 +113,9 @@ class ApiClient {
     TEndpoint extends PostEndpoints[TPath]
   >(
     path: TPath,
-    params: z.infer<TEndpoint['parameters']>
-  ): Promise<z.infer<EndpointByMethod['post'][TPath]['response']>> {
-    return fetchFromApi(getEndpointConfig('post', path), params);
+    params: z.infer<TEndpoint["parameters"]>
+  ): Promise<z.infer<EndpointByMethod["post"][TPath]["response"]>> {
+    return fetchFromApi(getEndpointConfig("post", path), params);
   }
 
   public patch<
@@ -112,9 +123,9 @@ class ApiClient {
     TEndpoint extends PatchEndpoints[TPath]
   >(
     path: TPath,
-    params: z.infer<TEndpoint['parameters']>
-  ): Promise<z.infer<EndpointByMethod['patch'][TPath]['response']>> {
-    return fetchFromApi(getEndpointConfig('patch', path), params);
+    params: z.infer<TEndpoint["parameters"]>
+  ): Promise<z.infer<EndpointByMethod["patch"][TPath]["response"]>> {
+    return fetchFromApi(getEndpointConfig("patch", path), params);
   }
 
   public put<
@@ -122,9 +133,9 @@ class ApiClient {
     TEndpoint extends PutEndpoints[TPath]
   >(
     path: TPath,
-    params: z.infer<TEndpoint['parameters']>
-  ): Promise<z.infer<EndpointByMethod['put'][TPath]['response']>> {
-    return fetchFromApi(getEndpointConfig('put', path), params);
+    params: z.infer<TEndpoint["parameters"]>
+  ): Promise<z.infer<EndpointByMethod["put"][TPath]["response"]>> {
+    return fetchFromApi(getEndpointConfig("put", path), params);
   }
 
   public delete<
@@ -132,13 +143,18 @@ class ApiClient {
     TEndpoint extends DeleteEndpoints[TPath]
   >(
     path: TPath,
-    params: z.infer<TEndpoint['parameters']>
-  ): Promise<z.infer<EndpointByMethod['delete'][TPath]['response']>> {
-    return fetchFromApi(getEndpointConfig('delete', path), params);
+    params: z.infer<TEndpoint["parameters"]>
+  ): Promise<z.infer<EndpointByMethod["delete"][TPath]["response"]>> {
+    return fetchFromApi(getEndpointConfig("delete", path), params);
   }
 }
 
-export const apiClient = new ApiClient();
+export const apiClient = new ApiClient({
+  headers: {
+    Accept: "asd",
+    Authorization: "Bearer bla",
+  },
+});
 
 export function getEndpointConfig<
   M extends keyof EndpointByMethod,

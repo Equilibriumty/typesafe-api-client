@@ -1,26 +1,26 @@
-import { useEffect, useState } from 'react';
-import './App.css';
-import { Todo } from './api/todo';
-import { apiClient } from './api/fetch';
+import { useEffect, useState } from "react";
+import "./App.css";
+import { Todo } from "./api/todo";
+import { apiClient } from "./api/fetch";
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [todo, setTodo] = useState<Todo | null>(null);
 
   const getTodos = async () => {
-    const todos = await apiClient.get('/todos', { query: { _page: 1 } });
+    const todos = await apiClient.get("/todos", { query: { _page: 1 } });
     setTodos(todos);
   };
 
   const getTodo = async (todoId: number) => {
-    const todo = await apiClient.get('/todos/{todoId}', {
+    const todo = await apiClient.get("/todos/{todoId}", {
       path: { todoId: 1 },
     });
     setTodo(todo);
   };
 
   const handleDeleteTodo = async (todoId: number) => {
-    const deletedTodo = await apiClient.delete('/todos/{todoId}', {
+    const deletedTodo = await apiClient.delete("/todos/{todoId}", {
       path: {
         todoId,
       },
@@ -29,9 +29,9 @@ function App() {
 
   const handlePartiallyUpdateTodo = async (
     todoId: number,
-    body: Partial<Omit<Todo, 'id'>>
+    body: Partial<Omit<Todo, "id">>
   ) => {
-    const updatedTodo = await apiClient.patch('/todos/{todoId}', {
+    const updatedTodo = await apiClient.patch("/todos/{todoId}", {
       path: {
         todoId,
       },
@@ -42,8 +42,8 @@ function App() {
     });
   };
 
-  const handleUpdateTodo = async (todoId: number, body: Omit<Todo, 'id'>) => {
-    const updatedTodo = await apiClient.put('/todos/{todoId}', {
+  const handleUpdateTodo = async (todoId: number, body: Omit<Todo, "id">) => {
+    const updatedTodo = await apiClient.put("/todos/{todoId}", {
       path: {
         todoId,
       },
@@ -55,10 +55,10 @@ function App() {
     });
   };
 
-  const handleCreateTodo = async (body: Omit<Todo, 'id'>) => {
-    const createdTodo = await apiClient.post('/todos', {
+  const handleCreateTodo = async (body: Omit<Todo, "id">) => {
+    const createdTodo = await apiClient.post("/todos", {
       body: {
-        title: 'new todo',
+        title: "new todo",
         userId: 1,
       },
     });
