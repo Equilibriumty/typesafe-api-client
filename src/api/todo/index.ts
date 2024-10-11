@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const Todo = z.object({
   userId: z.number(),
@@ -10,14 +10,12 @@ export const Todo = z.object({
 export type Todo = z.infer<typeof Todo>;
 
 export const getTodosResponse = z.array(Todo);
-export type getTodosResponseType = z.infer<typeof getTodosResponse>;
 
 export const getTodoResponse = Todo;
-export type getTodoResponseType = z.infer<typeof getTodoResponse>;
 
 export const getTodos = {
-  method: z.literal('GET'),
-  path: z.literal('/todos'),
+  method: z.literal("GET"),
+  path: z.literal("/todos"),
   parameters: z.object({
     query: z.object({
       _page: z.number().nonnegative(),
@@ -27,8 +25,8 @@ export const getTodos = {
 };
 
 export const getTodo = {
-  method: z.literal('GET'),
-  path: z.literal('/todos'),
+  method: z.literal("GET"),
+  path: z.literal("/todos"),
   parameters: z.object({
     path: z.object({
       todoId: z.number(),
@@ -41,11 +39,9 @@ export const createTodoResponse = z.object({
   newTodo: Todo,
 });
 
-export type createTodoResponseType = z.infer<typeof createTodoResponse>;
-
 export const createTodo = {
-  method: z.literal('POST'),
-  path: z.literal('/todos'),
+  method: z.literal("POST"),
+  path: z.literal("/todos"),
   parameters: z.object({
     body: z.object({
       title: z.string().min(1),
@@ -56,11 +52,10 @@ export const createTodo = {
 };
 
 export const updateTodoResponse = Todo;
-export type updateTodoResponseType = z.infer<typeof updateTodoResponse>;
 
 export const partiallyUpdateTodo = {
-  method: z.literal('PATCH'),
-  path: z.literal('/todos/{todoId}'),
+  method: z.literal("PATCH"),
+  path: z.literal("/todos/{todoId}"),
   parameters: z.object({
     body: z.object({
       title: z.string().optional(),
@@ -73,12 +68,11 @@ export const partiallyUpdateTodo = {
   response: updateTodoResponse,
 };
 
-export const deleteTodoResponse = z.object({});
-export type deleteTodoResponseType = z.infer<typeof deleteTodoResponse>;
+export const deleteTodoResponse = z.object({ success: z.boolean() });
 
 export const deleteTodo = {
-  method: z.literal('DELETE'),
-  path: z.literal('/todos/{todoId}'),
+  method: z.literal("DELETE"),
+  path: z.literal("/todos/{todoId}"),
   parameters: z.object({
     path: z.object({
       todoId: z.number(),
@@ -88,8 +82,8 @@ export const deleteTodo = {
 };
 
 export const updateTodo = {
-  method: z.literal('PUT'),
-  path: z.literal('/todos/{todoId'),
+  method: z.literal("PUT"),
+  path: z.literal("/todos/{todoId}"),
   parameters: z.object({
     path: z.object({
       todoId: z.number(),
